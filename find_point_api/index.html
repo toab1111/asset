@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Find missing point</title>
+    <!-- CSS only -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.1/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-iYQeCzEYFbKjA/T2uDLTpkwGzCiq6soy8tYaI1GyVh/UjpbCx/TYkiZhlZB6+fzT" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css">
+
+</head>
+
+<style>
+    #loading {
+        width: 2rem;
+        height: 2rem;
+        border: 5px solid #f3f3f3;
+        border-top: 6px solid #9c41f2;
+        border-radius: 100%;
+        margin: auto;
+        visibility: hidden;
+        animation: spin 1s infinite linear;
+    }
+
+    #loading.display {
+        visibility: visible;
+    }
+
+    @keyframes spin {
+        from {
+            transform: rotate(0deg);
+        }
+
+        to {
+            transform: rotate(360deg);
+        }
+    }
+</style>
+
+<body>
+    <!-- Image and text -->
+    <nav class="navbar navbar-light bg-light">
+        <a class="navbar-brand" href="#">
+            <img src="https://images.unsplash.com/photo-1519709042477-8de6eaf1fdc5?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1854&q=80"
+                width="30" height="30" class="d-inline-block align-top" alt="">
+            Find missing point
+        </a>
+    </nav>
+    <form style="margin: 4rem;">
+        <div class="row">
+            <div class="col">
+                <div class="input-group">
+                    <div class="input-group-prepend">
+                        <div class="input-group-text">E1</div>
+                    </div>
+                    <input id="e1" type="number" step="any" class="form-control" placeholder="E1" required>
+                </div>
+            </div>
+            <div class="col">
+                <div class="input-group">
+                    <div class="input-group-prepend">
+                        <div class="input-group-text">N1</div>
+                    </div>
+                    <input type="number" id="n1" step="any" class="form-control" placeholder="N1" required>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col">
+                <div class="input-group">
+                    <div class="input-group-prepend">
+                        <div class="input-group-text">E2</div>
+                    </div>
+                    <input id="e2" type="number" step="any" class="form-control" placeholder="E2" required>
+                </div>
+            </div>
+            <div class="col">
+                <div class="input-group">
+                    <div class="input-group-prepend">
+                        <div class="input-group-text">N2</div>
+                    </div>
+                    <input id="n2" type="number" step="any" class="form-control" placeholder="N2" required>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col">
+                <div class="input-group">
+                    <div class="input-group-prepend">
+                        <div class="input-group-text">from1</div>
+                    </div>
+                    <input id="from1" type="number" step="any" class="form-control" placeholder="from1" required>
+                </div>
+            </div>
+            <div class="col">
+                <div class="input-group">
+                    <div class="input-group-prepend">
+                        <div class="input-group-text">from2</div>
+                    </div>
+                    <input id="from2" type="number" step="any" class="form-control" placeholder="from2" required>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col">
+                <div class="input-group">
+                    <div class="input-group-prepend">
+                        <div class="input-group-text">Zone</div>
+                    </div>
+                    <input type="number" max="48" min="47" class="form-control" id="zone" placeholder="ZONE" required>
+                </div>
+            </div>
+            <div class="col">
+                <button type="button" id="find" class="btn btn-outline-success my-2 my-sm-0">Find</button>
+            </div>
+        </div>
+
+
+
+    </form>
+
+    <div id="loading"></div>
+
+    <div style=" margin:0rem  4rem 0rem ; ">
+        <div class="row">
+            <div class="col">
+                <div class="input-group">
+                    <div class="input-group-prepend">
+                        <div class="input-group-text">EF1</div>
+                    </div>
+                    <input type="text" class="form-control" id="ef1">
+                </div>
+            </div>
+            <div class="col">
+                <div class="input-group">
+                    <div class="input-group-prepend">
+                        <div class="input-group-text">NF1</div>
+                    </div>
+                    <input type="text" class="form-control" id="nf1">
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col">
+                <div class="input-group">
+                    <div class="input-group-prepend">
+                        <div class="input-group-text">EF2</div>
+                    </div>
+                    <input type="text" class="form-control" id="ef2">
+                </div>
+            </div>
+            <div class="col">
+                <div class="input-group">
+                    <div class="input-group-prepend">
+                        <div class="input-group-text">NF2</div>
+                    </div>
+                    <input type="text" class="form-control" id="nf2">
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <div style=" height:  350px; margin: 4rem; " id="mapid"></div>
+
+    <div class="row" style="margin: 4rem;">
+
+        <div class="col">
+            <div class="input-group">
+                <div class="input-group-prepend">
+                    <div class="input-group-text">E</div>
+                </div>
+                <input type="number" step="any"  class="form-control" id="E" placeholder="E" >
+            </div>
+        </div>
+
+        <div class="col">
+            <div class="input-group">
+                <div class="input-group-prepend">
+                    <div class="input-group-text">N</div>
+                </div>
+                <input type="number" step="any" class="form-control" id="N" placeholder="N" >
+            </div>
+        </div>
+
+        <div class="col">
+            <div class="input-group">
+                <div class="input-group-prepend">
+                    <div class="input-group-text">D</div>
+                </div>
+                <input type="number" step="any" class="form-control" id="D" placeholder="D" >
+            </div>
+        </div>
+        <div class="col">
+            <button type="button" id="find2" class="btn btn-outline-success my-2 my-sm-0">Find2</button>
+        </div>
+    </div>
+</body>
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js "></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.1/dist/js/bootstrap.bundle.min.js"
+    integrity="sha384-u1OknCvxWvY5kfmNBILK2hRnQC3Pr17a+RTT6rIHI7NnikvbZlHgTPOOmMi466C8"
+    crossorigin="anonymous"></script>
+<script src="https://unpkg.com/leaflet@1.4.0/dist/leaflet.js"></script>
+<script src="//cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+
+
+
+    var googleSat = L.tileLayer('http://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
+        maxZoom: 20,
+        subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
+        crs: L.CRS.EPSG4326
+    });
+
+    var googleStreets = L.tileLayer('http://{s}.google.com/vt/lyrs=m&hl=th&x={x}&y={y}&z={z}', {
+        maxZoom: 20,
+        subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
+        crs: L.CRS.EPSG4326
+    });
+
+    var googleTerrain = L.tileLayer('http://mt0.google.com/vt/lyrs=p&hl=th&x={x}&y={y}&z={z}', {
+        maxZoom: 20,
+        subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
+        crs: L.CRS.EPSG4326
+    });
+
+
+    var googleHybrid = L.tileLayer('http://{s}.google.com/vt/lyrs=y&hl=th&x={x}&y={y}&z={z}', {
+        maxZoom: 20,
+        subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
+        crs: L.CRS.EPSG4326
+    });
+
+    var mymap = L.map('mapid', {
+        layers: [googleStreets],
+    }).setView([13.8, 100.5], 5);
+
+
+    baseMaps = {
+        'GoogleStreets': googleStreets,
+        'Google Satellite': googleSat,
+        'Google Terrain': googleTerrain,
+        'Google Hybrid': googleHybrid,
+    }
+
+    L.control.layers(baseMaps).addTo(mymap);
+    var point = L.layerGroup();
+    function find_point() {
+        const loader = document.querySelector("#loading");
+        loader.classList.add("display");
+        const e1 = document.getElementById("e1").value;
+        const e2 = document.getElementById("e2").value;
+        const n1 = document.getElementById("n1").value;
+        const n2 = document.getElementById("n2").value;
+        const from1 = document.getElementById("from1").value;
+        const from2 = document.getElementById("from2").value;
+        const zone = document.getElementById("zone").value;
+
+
+        var api = "http://127.0.0.1:8000/" + e1 + "/" + n1 + "/" + e2 + "/" + n2 + "/" + from1 + "/" + from2 + "/" + zone
+        const pm = axios({
+            method: 'get',
+            url: api,
+            headers: { 'Access-Control-Allow-Origin': '*' }
+        }).then(function (respone) {
+            data = respone.data
+            console.log(data);
+            document.getElementById("ef1").value = data.ef1;
+            document.getElementById("ef2").value = data.ef2;
+            document.getElementById("nf1").value = data.nf1;
+            document.getElementById("nf2").value = data.nf2;
+
+            geo_json = {
+                "type": "FeatureCollection",
+                "features": [
+                    {
+                        "type": "Feature",
+                        "properties": { "name": "F1", },
+                        "geometry": {
+                            "type": "Point",
+                            "coordinates": [
+                                data.lonf1,
+                                data.latf1
+                            ]
+                        }
+                    },
+                    {
+                        "type": "Feature",
+                        "properties": { "name": "F2" },
+                        "geometry": {
+                            "type": "Point",
+                            "coordinates": [
+                                data.lonf2,
+                                data.latf2
+                            ]
+                        }
+                    },
+                    {
+                        "type": "Feature",
+                        "properties": { "name": "P1" },
+                        "geometry": {
+                            "type": "Point",
+                            "coordinates": [
+                                data.lonp1,
+                                data.latp1
+                            ]
+                        }
+                    },
+                    {
+                        "type": "Feature",
+                        "properties": { "name": "P2" },
+                        "geometry": {
+                            "type": "Point",
+                            "coordinates": [
+                                data.lonp2,
+                                data.latp2
+                            ]
+                        }
+                    }
+                ]
+            }
+
+            point.clearLayers();
+            point = L.geoJSON(geo_json, {
+                onEachFeature: function (feature, layer) {
+                    layer.bindPopup("<strong>" + feature.properties['name'])
+                }
+            })
+            mymap.fitBounds(point.getBounds());
+            mymap.addLayer(point);
+            loader.classList.remove("display");
+            Swal.fire('เรียบร้อย')
+
+        }).catch(function (error) {
+            console.log(error);
+            loader.classList.remove("display");
+
+            Swal.fire({
+                title: 'ผิดพลาด!',
+                text: 'ลองอีกครั้ง',
+                icon: 'error',
+                confirmButtonText: 'ลองใหม่'
+            })
+        })
+
+
+    }
+
+    function find_pythagoras(){
+        console.log("hh");
+        const E = document.getElementById("E").value;
+        const N = document.getElementById("N").value;
+        var d =Math.sqrt(E**2+N**2) 
+        console.log(d);
+        document.getElementById("D").value = d
+    }
+
+    const find_btn = document.getElementById("find");
+    const find_btn_pythagoras = document.getElementById("find2");
+
+    find_btn.addEventListener('click', find_point);
+
+    find_btn_pythagoras.addEventListener('click', find_pythagoras);
+
+</script>
+
+</html>
