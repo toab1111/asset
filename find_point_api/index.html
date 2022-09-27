@@ -173,7 +173,7 @@
                 <div class="input-group-prepend">
                     <div class="input-group-text">E</div>
                 </div>
-                <input type="number" step="any"  class="form-control" id="E" placeholder="E" >
+                <input type="number" step="any" class="form-control" id="E" placeholder="E">
             </div>
         </div>
 
@@ -182,7 +182,7 @@
                 <div class="input-group-prepend">
                     <div class="input-group-text">N</div>
                 </div>
-                <input type="number" step="any" class="form-control" id="N" placeholder="N" >
+                <input type="number" step="any" class="form-control" id="N" placeholder="N">
             </div>
         </div>
 
@@ -191,7 +191,7 @@
                 <div class="input-group-prepend">
                     <div class="input-group-text">D</div>
                 </div>
-                <input type="number" step="any" class="form-control" id="D" placeholder="D" >
+                <input type="number" step="any" class="form-control" id="D" placeholder="D">
             </div>
         </div>
         <div class="col">
@@ -205,9 +205,9 @@
     crossorigin="anonymous"></script>
 <script src="https://unpkg.com/leaflet@1.4.0/dist/leaflet.js"></script>
 <script src="//cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="L.LatLng.UTM.js"></script>
+
 <script>
-
-
 
     var googleSat = L.tileLayer('http://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
         maxZoom: 20,
@@ -246,115 +246,212 @@
         'Google Hybrid': googleHybrid,
     }
 
+    function utm_to_latlon(e, n, zone) {
+        var item = L.utm({ x: e, y: n, zone: zone, band: 'N' });
+        var coord = item.latLng();
+        return coord
+
+    }
+
     L.control.layers(baseMaps).addTo(mymap);
     var point = L.layerGroup();
     function find_point() {
         const loader = document.querySelector("#loading");
         loader.classList.add("display");
-        const e1 = document.getElementById("e1").value;
-        const e2 = document.getElementById("e2").value;
-        const n1 = document.getElementById("n1").value;
-        const n2 = document.getElementById("n2").value;
-        const from1 = document.getElementById("from1").value;
-        const from2 = document.getElementById("from2").value;
-        const zone = document.getElementById("zone").value;
+        const e1 = Number(document.getElementById("e1").value);
+        const e2 = Number(document.getElementById("e2").value);
+        const n1 = Number(document.getElementById("n1").value);
+        const n2 = Number(document.getElementById("n2").value);
+        const from1 = Number(document.getElementById("from1").value);
+        const from2 = Number(document.getElementById("from2").value);
+        const zone = Number(document.getElementById("zone").value);
 
 
-        var api = "http://127.0.0.1:8000/" + e1 + "/" + n1 + "/" + e2 + "/" + n2 + "/" + from1 + "/" + from2 + "/" + zone
-        const pm = axios({
-            method: 'get',
-            url: api,
-            headers: { 'Access-Control-Allow-Origin': '*' }
-        }).then(function (respone) {
-            data = respone.data
-            console.log(data);
-            document.getElementById("ef1").value = data.ef1;
-            document.getElementById("ef2").value = data.ef2;
-            document.getElementById("nf1").value = data.nf1;
-            document.getElementById("nf2").value = data.nf2;
+        var d = Math.sqrt((e2 - e1) ** 2 + (n2 - n1) ** 2)
+        var a = (from1 ** 2 - from2 ** 2 + d ** 2) / (2 * d)
+        var h = Math.sqrt(from1 ** 2 - a ** 2)
+        const x2 = e1 + a * (e2 - e1) / d
+        const y2 = n1 + a * (n2 - n1) / d
+        const x3 = x2 + h * (n2 - n1) / d
+        const y3 = y2 - h * (e2 - e1) / d
+        const x4 = x2 - h * (n2 - n1) / d
+        const y4 = y2 + h * (e2 - e1) / d
 
-            geo_json = {
-                "type": "FeatureCollection",
-                "features": [
-                    {
-                        "type": "Feature",
-                        "properties": { "name": "F1", },
-                        "geometry": {
-                            "type": "Point",
-                            "coordinates": [
-                                data.lonf1,
-                                data.latf1
-                            ]
-                        }
-                    },
-                    {
-                        "type": "Feature",
-                        "properties": { "name": "F2" },
-                        "geometry": {
-                            "type": "Point",
-                            "coordinates": [
-                                data.lonf2,
-                                data.latf2
-                            ]
-                        }
-                    },
-                    {
-                        "type": "Feature",
-                        "properties": { "name": "P1" },
-                        "geometry": {
-                            "type": "Point",
-                            "coordinates": [
-                                data.lonp1,
-                                data.latp1
-                            ]
-                        }
-                    },
-                    {
-                        "type": "Feature",
-                        "properties": { "name": "P2" },
-                        "geometry": {
-                            "type": "Point",
-                            "coordinates": [
-                                data.lonp2,
-                                data.latp2
-                            ]
-                        }
+        var latp1 = utm_to_latlon(e1, n1, zone).lat
+        var lonp1 = utm_to_latlon(e1, n1, zone).lng
+        var latp2 = utm_to_latlon(e2, n2, zone).lat
+        var lonp2 = utm_to_latlon(e2, n2, zone).lng
+        var latf1 = utm_to_latlon(x3, y3, zone).lat
+        var lonf1 = utm_to_latlon(x3, y3, zone).lng
+        var latf2 = utm_to_latlon(x4, y4, zone).lat
+        var lonf2 = utm_to_latlon(x4, y4, zone).lng
+
+        document.getElementById("ef1").value = x3;
+        document.getElementById("ef2").value = x4;
+        document.getElementById("nf1").value = y3;
+        document.getElementById("nf2").value = y4;
+
+        geo_json = {
+            "type": "FeatureCollection",
+            "features": [
+                {
+                    "type": "Feature",
+                    "properties": { "name": "F1", },
+                    "geometry": {
+                        "type": "Point",
+                        "coordinates": [
+                            lonf1,
+                            latf1
+                        ]
                     }
-                ]
-            }
-
-            point.clearLayers();
-            point = L.geoJSON(geo_json, {
-                onEachFeature: function (feature, layer) {
-                    layer.bindPopup("<strong>" + feature.properties['name'])
+                },
+                {
+                    "type": "Feature",
+                    "properties": { "name": "F2" },
+                    "geometry": {
+                        "type": "Point",
+                        "coordinates": [
+                            lonf2,
+                            latf2
+                        ]
+                    }
+                },
+                {
+                    "type": "Feature",
+                    "properties": { "name": "P1" },
+                    "geometry": {
+                        "type": "Point",
+                        "coordinates": [
+                            lonp1,
+                            latp1
+                        ]
+                    }
+                },
+                {
+                    "type": "Feature",
+                    "properties": { "name": "P2" },
+                    "geometry": {
+                        "type": "Point",
+                        "coordinates": [
+                            lonp2,
+                            latp2
+                        ]
+                    }
                 }
-            })
-            mymap.fitBounds(point.getBounds());
-            mymap.addLayer(point);
-            loader.classList.remove("display");
-            Swal.fire('เรียบร้อย')
+            ]
+        }
 
-        }).catch(function (error) {
-            console.log(error);
-            loader.classList.remove("display");
-
-            Swal.fire({
-                title: 'ผิดพลาด!',
-                text: 'ลองอีกครั้ง',
-                icon: 'error',
-                confirmButtonText: 'ลองใหม่'
-            })
+        point.clearLayers();
+        point = L.geoJSON(geo_json, {
+            onEachFeature: function (feature, layer) {
+                layer.bindPopup("<strong>" + feature.properties['name'])
+            }
         })
+        mymap.fitBounds(point.getBounds());
+        mymap.addLayer(point);
+        loader.classList.remove("display");
+        Swal.fire('เรียบร้อย')
+
+
+
+        // lonp1, latp1 = pyproj.transform(proj_in, proj_wgs84, e1,n1)
+        // lonp2, latp2 = pyproj.transform(proj_in, proj_wgs84, e2,n2)
+        // lonf1, latf1 = pyproj.transform(proj_in, proj_wgs84, x3,y3)
+        // lonf2, latf2 = pyproj.transform(proj_in, proj_wgs84, x4,y4)
+
+        // var api = "http://127.0.0.1:8000/" + e1 + "/" + n1 + "/" + e2 + "/" + n2 + "/" + from1 + "/" + from2 + "/" + zone
+        // const pm = axios({
+        //     method: 'get',
+        //     url: api,
+        //     headers: { 'Access-Control-Allow-Origin': '*' }
+        // }).then(function (respone) {
+        //     data = respone.data
+        //     console.log(data);
+        //     document.getElementById("ef1").value = data.ef1;
+        //     document.getElementById("ef2").value = data.ef2;
+        //     document.getElementById("nf1").value = data.nf1;
+        //     document.getElementById("nf2").value = data.nf2;
+
+        //     geo_json = {
+        //         "type": "FeatureCollection",
+        //         "features": [
+        //             {
+        //                 "type": "Feature",
+        //                 "properties": { "name": "F1", },
+        //                 "geometry": {
+        //                     "type": "Point",
+        //                     "coordinates": [
+        //                         data.lonf1,
+        //                         data.latf1
+        //                     ]
+        //                 }
+        //             },
+        //             {
+        //                 "type": "Feature",
+        //                 "properties": { "name": "F2" },
+        //                 "geometry": {
+        //                     "type": "Point",
+        //                     "coordinates": [
+        //                         data.lonf2,
+        //                         data.latf2
+        //                     ]
+        //                 }
+        //             },
+        //             {
+        //                 "type": "Feature",
+        //                 "properties": { "name": "P1" },
+        //                 "geometry": {
+        //                     "type": "Point",
+        //                     "coordinates": [
+        //                         data.lonp1,
+        //                         data.latp1
+        //                     ]
+        //                 }
+        //             },
+        //             {
+        //                 "type": "Feature",
+        //                 "properties": { "name": "P2" },
+        //                 "geometry": {
+        //                     "type": "Point",
+        //                     "coordinates": [
+        //                         data.lonp2,
+        //                         data.latp2
+        //                     ]
+        //                 }
+        //             }
+        //         ]
+        //     }
+
+        //     point.clearLayers();
+        //     point = L.geoJSON(geo_json, {
+        //         onEachFeature: function (feature, layer) {
+        //             layer.bindPopup("<strong>" + feature.properties['name'])
+        //         }
+        //     })
+        //     mymap.fitBounds(point.getBounds());
+        //     mymap.addLayer(point);
+        //     loader.classList.remove("display");
+        //     Swal.fire('เรียบร้อย')
+
+        // }).catch(function (error) {
+        //     console.log(error);
+        //     loader.classList.remove("display");
+
+        //     Swal.fire({
+        //         title: 'ผิดพลาด!',
+        //         text: 'ลองอีกครั้ง',
+        //         icon: 'error',
+        //         confirmButtonText: 'ลองใหม่'
+        //     })
+        // })
 
 
     }
 
-    function find_pythagoras(){
-        console.log("hh");
+    function find_pythagoras() {
         const E = document.getElementById("E").value;
         const N = document.getElementById("N").value;
-        var d =Math.sqrt(E**2+N**2) 
-        console.log(d);
+        var d = Math.sqrt(E ** 2 + N ** 2)
         document.getElementById("D").value = d
     }
 
