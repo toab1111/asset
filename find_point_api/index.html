@@ -256,8 +256,8 @@
     L.control.layers(baseMaps).addTo(mymap);
     var point = L.layerGroup();
     function find_point() {
-        const loader = document.querySelector("#loading");
-        loader.classList.add("display");
+        // const loader = document.querySelector("#loading");
+        // loader.classList.add("display");
         const e1 = Number(document.getElementById("e1").value);
         const e2 = Number(document.getElementById("e2").value);
         const n1 = Number(document.getElementById("n1").value);
@@ -349,7 +349,7 @@
         })
         mymap.fitBounds(point.getBounds());
         mymap.addLayer(point);
-        loader.classList.remove("display");
+        // loader.classList.remove("display");
         Swal.fire('เรียบร้อย')
 
 
